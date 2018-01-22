@@ -17,7 +17,8 @@ ASP.NET Core and VS2017 come with a secrets manager. So, before running the appl
 First, you need to check the `csproj` file to ensure that the `UserSecretsId` is setup. If not add this to the `csproj` file:
 
 ```
-<PropertyGroup>        <TargetFramework>netcoreapp2.0</TargetFramework>
+<PropertyGroup>        
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <UserSecretsId>User-Secret-ID</UserSecretsId>
 </PropertyGroup>
 ```
@@ -103,6 +104,8 @@ In `Startup.cs`, add a new code in the `ConfigureServices()` method for the new 
 services.AddDbContext<DataDbContext>(options => options.UseSqlServer(Configuration["DataConnection"]));
 ```
 
+You also need to ensure that the new pages are accessible from the Navigation Bar. Find the `_Layout.cshtml` and add the missing links to your new application sections.
+
 ## 3. Adding CRUD Views and Controllers
 
 In Visual Studio, right-click on the **Controllers** folder and choose **"Add new Scaffolded item…"**. 
@@ -141,33 +144,68 @@ Unlike in the previous modules that we relied on the ASP.NET Core framework to d
 
 To make search more efficient we need to think how to query against our existing data store. Although we could use several queries and combine them together, we want to minimise round trips to the database and use as little code as possible. Alternatively, we could use a 3rd party search component to remove the need for extra coding. However, for this project we assume that all the features will be provided by the application natively.
 
-In the project, right-click and add a new folder -> **ViewComponents**. Add a new class in that folder called `AdvancedSearchViewComponent.cs`
+In the project, right-click and add a new Controller -> **SearchController**. Add a constructor to allow you to inject the appropriate DBContext. Then create an **Index()** method that will be used to load the Search page. The **Index()** should pass a model for model-binding the search criteria.
 
-Add the following code, some of it is a placeholder for now.
+Create a new class `SearchCriteria.cs` with the fields necessary to run your search. At this point you also want to think how to pass the `LA` data during page load. The LA data should come from the database and passed to the view so that the user can select the appropriate value from the drop down. 
+
+Add the following code in the `SearchCriteria` class:
 
 ```
-public class AdvancedSearchViewComponent : ViewComponent
+public class SearchCriteria
 {
-    private DataDbContext dbContext;
-    public AdvancedSearchViewComponent(DataDbContext dbContext)
-    {
-        this.dbContext = dbContext;
-    }
-
-    public async Task<IViewComponentResult> InvokeAsync(SearchCriteria searchCriteria)
-    {
-        var items = await GetUserCaseData(searchCriteria);
-        return View(items);
-    }
-
-    private async Task<List<UserCase>> GetUserCaseData(SearchCriteria searchCriteria)
-    {
-        return null;
-    }
+    public string Name { get; set; }
+    public List<Ladata> LaData { get; set; }
+    public int LaValue { get; set; }
+    public bool CaseStatus { get; set; }
+    public bool Absence { get; set; }
+    public bool Bullying { get; set; }
+    public bool Other { get; set; }
 }
 ```
 
-Next, we need to implement the advanced search. One way to do this is to use a EF Core with Linq and rely on the `IQueryable` to build up the query based on the paramaters passed
+As a next step, we want to implement the Index method for the `HttpGet` operation. The Index action should look like this:
+
+```
+[HttpGet]
+public async Task<IActionResult> Index()
+{
+    var searchCriteria = new SearchCriteria()
+    {
+        LaData = await dbContext.Ladata.ToListAsync()
+    };
+
+    return View(searchCriteria);
+}
+```
+
+You'll notice that this controller action makes a call to the database to pull and populate the `LaData` field. This is where, usually, we make use of dependency injected services to interact with the database. But this is beyond the 100-level or the simplicity of this specific PoC. 
+
+The above action returns a View so if you haven't created one yet, you need to do it now. Remember that ASP.NET Core uses *convention over configuration* and it makes certain assumptions about the location of your files. For the view to be accessible we need to place the code in the right location. Create a new directory structure in your ASP.NET Core project: **Views -> Search**. Right-click on the **Search** folder and add a new **View**. The View should be strong-typed against the `SearchCriteria` class. Scaffolding should take care of creating the right layout, however, you need to change the LaValue to use a drop-down. We can leverage the new **tag-helpers** built-into the ASP.NET Core framework and Razor Views to create the drop-down control:
+
+```
+<div class="form-group">
+    <label asp-for="LaValue" class="control-label"></label>
+    <select asp-for="LaValue" asp-items="@(new SelectList(Model.LaData,"Id","Name"))" class="form-control"></select>
+    <span asp-validation-for="LaValue" class="text-danger"></span>
+</div>
+```
+
+Next, we need to implement the action in the Search controller that will accept the `HttpPost` from our advanced search form. Add a new `Index()` action with a `SearchCriteria` object as a parameter and implement the actual search operation based on the user-provided values. 
+
+```
+public async Task<IActionResult> Index(SearchCriteria searchCriteria)
+{
+    if (ModelState.IsValid)
+    {
+        var results = await GetUserCaseData(searchCriteria);
+        return View("Results", results);
+    }
+
+    return View(searchCriteria);
+}
+```
+
+One way to implment the actual **Search** functionality is to use a EF Core with Linq and rely on the `IQueryable` to build up the query. This way we can add the paramater values as they were passed by the user in the `SearchCriteria` object:
 
 ```
  private async Task<List<UserCase>> GetUserCaseData(SearchCriteria searchCriteria)
@@ -189,13 +227,13 @@ Next, we need to implement the advanced search. One way to do this is to use a E
 }
 ```
 
-Create the **View** to display the search results.
+Finally, we need to create the **View** to display the search results.
 
-In the **Views** folder, create the following folder structure: **Views -> Component -> AdvancedSearch**. Right click on the AdvancedSearch folder and add a new **View**. In the new dialog box, choose the following values:
+In the **Views** folder, create the following folder structure: **View -> Search -> Results**. Right click on the **Search** folder and add a new View. Use scaffolding to speed up the process. In the new dialog box, choose the following values:
 
-- ViewName: Default
+- ViewName: Results
 - Template: List
 - Model class: UserCase
 - DataContext class: DataDbContext
 
-Edit the generated view to give it the look and feel you wish. 
+Edit the generated view to give it the look and feel you wish. Also make sure to remove the CRUD operations you don't need. 

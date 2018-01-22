@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using DfeDemo.Models;
 
 namespace DfeDemo.Controllers
 {
-    public class HomeController : Controller
+	public class HomeController : Controller
     {
         public IActionResult Index()
         {

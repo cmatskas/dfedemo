@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Models
 {
-    public partial class UserCase
+	public partial class UserCase
     {
         public int CaseId { get; set; }
         public string Firstname { get; set; }
