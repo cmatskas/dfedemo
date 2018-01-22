@@ -1,0 +1,83 @@
+﻿@model IEnumerable<Models.UserCase>
+
+@{
+    ViewData["Title"] = "Search Results";
+}
+
+<h2>Default</h2>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Firstname)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Surname)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.DateOfBirth)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Laid)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.CaseStatus)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Bullying)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Absence)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Other)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.UserId)
+                </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Firstname)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Surname)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DateOfBirth)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Laid)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CaseStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Bullying)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Absence)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Other)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserId)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.CaseId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.CaseId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.CaseId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

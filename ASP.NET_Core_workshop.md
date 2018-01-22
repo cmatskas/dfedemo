@@ -135,4 +135,67 @@ Unlike in the previous modules that we relied on the ASP.NET Core framework to d
 - PartialView
 - Web Component
 
-**PartialViews** have limited functionality whereas **Web Components** are a lot more powerful and flexible. 
+**PartialViews** have limited functionality whereas **Web Components** are a lot more powerful and flexible. On the other hand,
+
+> View Components (VCs) are similar to Partial Views, but they are much more powerful. VCs include the same separation-of-concerns and testability benefits found between a controller and view. You can think of a VC as a mini-controller—it’s responsible for rendering a chunk rather than a whole response. 
+
+To make search more efficient we need to think how to query against our existing data store. Although we could use several queries and combine them together, we want to minimise round trips to the database and use as little code as possible. Alternatively, we could use a 3rd party search component to remove the need for extra coding. However, for this project we assume that all the features will be provided by the application natively.
+
+In the project, right-click and add a new folder -> **ViewComponents**. Add a new class in that folder called `AdvancedSearchViewComponent.cs`
+
+Add the following code, some of it is a placeholder for now.
+
+```
+public class AdvancedSearchViewComponent : ViewComponent
+{
+    private DataDbContext dbContext;
+    public AdvancedSearchViewComponent(DataDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
+    public async Task<IViewComponentResult> InvokeAsync(SearchCriteria searchCriteria)
+    {
+        var items = await GetUserCaseData(searchCriteria);
+        return View(items);
+    }
+
+    private async Task<List<UserCase>> GetUserCaseData(SearchCriteria searchCriteria)
+    {
+        return null;
+    }
+}
+```
+
+Next, we need to implement the advanced search. One way to do this is to use a EF Core with Linq and rely on the `IQueryable` to build up the query based on the paramaters passed
+
+```
+ private async Task<List<UserCase>> GetUserCaseData(SearchCriteria searchCriteria)
+{
+    var query = dbContext.UserCase.AsQueryable();
+
+    if (!string.IsNullOrEmpty(searchCriteria.Name))
+    {
+        query = query.Where(s => s.Firstname == searchCriteria.Name);
+        query = query.Where(s => s.Surname == searchCriteria.Name);
+    }
+    
+    query = query.Where(s => s.Laid == searchCriteria.LaValue);
+    query = query.Where(s => s.Absence == searchCriteria.Absence);
+    query = query.Where(s => s.Bullying == searchCriteria.Bullying);
+    query = query.Where(s => s.Other == searchCriteria.Other);
+
+    return await query.ToListAsync();
+}
+```
+
+Create the **View** to display the search results.
+
+In the **Views** folder, create the following folder structure: **Views -> Component -> AdvancedSearch**. Right click on the AdvancedSearch folder and add a new **View**. In the new dialog box, choose the following values:
+
+- ViewName: Default
+- Template: List
+- Model class: UserCase
+- DataContext class: DataDbContext
+
+Edit the generated view to give it the look and feel you wish. 
